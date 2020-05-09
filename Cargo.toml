@@ -1,0 +1,14 @@
+[package]
+name = "as_deref"
+version = "0.0.0"
+authors = ["Ryo Yamashita <qryxip@gmail.com>"]
+edition = "2018"
+description = "Derives `.as_deref()` and `.as_deref_mut()` for pattern matching."
+readme = "README.md"
+repository = "https://github.com/qryxip/as_deref"
+license = "MIT OR Apache-2.0"
+keywords = ["derive", "macro", "no_std"]
+categories = ["development-tools", "no-std", "rust-patterns"]
+publish = false
+
+[dependencies]
