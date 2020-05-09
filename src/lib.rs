@@ -1,5 +1,7 @@
 #![no_std]
 
+pub use as_deref_derive::AsDeref;
+
 pub trait AsDeref {
     type Target;
     fn as_deref(self) -> Self::Target;
