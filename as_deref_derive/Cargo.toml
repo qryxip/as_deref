@@ -1,18 +1,17 @@
-[workspace]
-members = ["./as_deref_derive"]
-
 [package]
-name = "as_deref"
+name = "as_deref_derive"
 version = "0.0.0"
 authors = ["Ryo Yamashita <qryxip@gmail.com>"]
 edition = "2018"
 description = "Derives `.as_deref()` and `.as_deref_mut()` for pattern matching."
-readme = "README.md"
+readme = "../README.md"
 repository = "https://github.com/qryxip/as_deref"
 license = "MIT OR Apache-2.0"
 keywords = ["derive", "macro", "no_std"]
 categories = ["development-tools", "no-std", "rust-patterns"]
 publish = false
 
+[lib]
+proc-macro = true
+
 [dependencies]
-as_deref_derive = { version = "0.0.0", path = "./as_deref_derive" }
