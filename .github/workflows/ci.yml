@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  push:
+    branches:
+      - '*'
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+**'
+  pull_request:
+
+jobs:
+  rustfmt:
+    name: Rustfmt
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup `stable-x86_64-unknown-linux-gnu`
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable-x86_64-unknown-linux-gnu
+          default: true
+          profile: minimal
+          components: rustfmt
+
+      - name: '`cargo fmt -- --check`'
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: -- --check
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        name:
+          - stable-x86_64-pc-windows-msvc
+          - stable-x86_64-apple-darwin
+          - stable-x86_64-unknown-linux-gnu
+          - stable-x86_64-unknown-linux-musl
+          - beta-x86_64-pc-windows-msvc
+          - beta-x86_64-apple-darwin
+          - beta-x86_64-unknown-linux-gnu
+          - beta-x86_64-unknown-linux-musl
+        include:
+          - { name: stable-x86_64-pc-windows-msvc   , channel: stable, target-triple: x86_64-pc-windows-msvc   , host-triple: x86_64-pc-windows-msvc  , os: windows-2019 }
+          - { name: stable-x86_64-apple-darwin      , channel: stable, target-triple: x86_64-apple-darwin      , host-triple: x86_64-apple-darwin     , os: macos-10.15  }
+          - { name: stable-x86_64-unknown-linux-gnu , channel: stable, target-triple: x86_64-unknown-linux-gnu , host-triple: x86_64-unknown-linux-gnu, os: ubuntu-18.04 }
+          - { name: stable-x86_64-unknown-linux-musl, channel: stable, target-triple: x86_64-unknown-linux-musl, host-triple: x86_64-unknown-linux-gnu, os: ubuntu-18.04 }
+          - { name: beta-x86_64-pc-windows-msvc     , channel: beta  , target-triple: x86_64-pc-windows-msvc   , host-triple: x86_64-pc-windows-msvc  , os: windows-2019 }
+          - { name: beta-x86_64-apple-darwin        , channel: beta  , target-triple: x86_64-apple-darwin      , host-triple: x86_64-apple-darwin     , os: macos-10.15  }
+          - { name: beta-x86_64-unknown-linux-gnu   , channel: beta  , target-triple: x86_64-unknown-linux-gnu , host-triple: x86_64-unknown-linux-gnu, os: ubuntu-18.04 }
+          - { name: beta-x86_64-unknown-linux-musl  , channel: beta  , target-triple: x86_64-unknown-linux-musl, host-triple: x86_64-unknown-linux-gnu, os: ubuntu-18.04 }
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: '`sudo apt-get install musl-tools`'
+        run: sudo apt-get install musl-tools
+        if: matrix.target-triple == 'x86_64-unknown-linux-musl'
+
+      - name: 'Setup `${{ matrix.channel }}-${{ matrix.host-triple }}` (target=${{ matrix.target-triple }})'
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.channel }}-${{ matrix.host-triple }}
+          target: ${{ matrix.target-triple }}
+          default: true
+          profile: minimal
+          components: clippy
+
+      - name: '`cargo clippy --workspace --all-targets --target ${{ matrix.target-triple }} -v -- -D warnings`'
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --workspace --all-targets --target ${{ matrix.target-triple }} -v -- -D warnings
+        if: matrix.channel == 'stable'
+
+      - name: '`cargo test --no-fail-fast --workspace --target ${{ matrix.target-triple }} -v`'
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --no-fail-fast --workspace --target ${{ matrix.target-triple }} -v
